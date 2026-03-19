@@ -109,14 +109,32 @@ namespace NppLspPlugin.Plugin
         private static void TryStartServerForCurrentFile()
         {
             var configDir = PluginBase.GetPluginConfigDir();
+
+            // Auto-create default config if it doesn't exist
+            var configPath = Path.Combine(configDir, "NppLspPlugin.json");
+            ServerConfig.EnsureDefaultConfig(configPath);
+
             var config = ServerConfig.Load(configDir);
-            if (config == null) return;
+            if (config == null)
+            {
+                Logger.Log("No config file found or failed to parse");
+                return;
+            }
 
             var filePath = PluginBase.GetCurrentFilePath();
-            if (string.IsNullOrEmpty(filePath)) return;
+            if (string.IsNullOrEmpty(filePath))
+            {
+                Logger.Log("No current file path");
+                return;
+            }
 
             var serverDef = config.FindServerForFile(filePath);
-            if (serverDef == null) return;
+            if (serverDef == null)
+            {
+                var ext = Path.GetExtension(filePath);
+                Logger.Log($"No server configured for extension '{ext}' (file: {filePath})");
+                return;
+            }
 
             var languageId = serverDef.LanguageId;
 
@@ -141,6 +159,8 @@ namespace NppLspPlugin.Plugin
 
             // Subscribe to server notifications
             _lspClient.OnDiagnosticsReceived += _diagnostics.OnDiagnosticsReceived;
+
+            Logger.Log($"Starting LSP server: command='{serverDef.Command}', args=[{string.Join(", ", serverDef.Args)}], languageId='{languageId}', rootUri='{rootUri}'");
 
             try
             {
