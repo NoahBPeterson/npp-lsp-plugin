@@ -231,7 +231,9 @@ namespace NppLspPlugin.Server
             var pathVar = Environment.GetEnvironmentVariable("PATH");
             if (string.IsNullOrEmpty(pathVar)) return command;
 
-            var extensions = new[] { "", ".exe", ".cmd", ".bat" };
+            // Try .exe and .cmd before bare name — npm installs create extensionless
+            // Unix shell scripts alongside the .cmd wrapper; the bare file isn't executable on Windows
+            var extensions = new[] { ".exe", ".cmd", ".bat", "" };
             var dirs = pathVar.Split(Path.PathSeparator);
 
             foreach (var dir in dirs)

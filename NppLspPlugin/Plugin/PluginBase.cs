@@ -71,26 +71,10 @@ namespace NppLspPlugin.Plugin
 
         internal static string GetCurrentFilePath()
         {
-            // Use raw IntPtr buffer to avoid StringBuilder marshaling issues in NativeAOT
-            IntPtr bufferPtr = Marshal.AllocHGlobal(Npp.MAX_PATH * 2); // UTF-16 = 2 bytes per char
-            try
-            {
-                // Zero the buffer
-                for (int i = 0; i < Npp.MAX_PATH * 2; i++)
-                    Marshal.WriteByte(bufferPtr, i, 0);
-
-                Npp.SendMessage(nppData._nppHandle,
-                    (uint)NppMsg.NPPM_GETFULLCURRENTPATH,
-                    (IntPtr)Npp.MAX_PATH, bufferPtr);
-
-                string result = Marshal.PtrToStringUni(bufferPtr) ?? "";
-                Logger.Log($"NPPM_GETFULLCURRENTPATH returned: '{result}' (len={result.Length})");
-                return result;
-            }
-            finally
-            {
-                Marshal.FreeHGlobal(bufferPtr);
-            }
+            // NPPM_GETFULLCURRENTPATH is unreliable under NativeAOT.
+            // Use buffer ID approach which works consistently.
+            var bufferId = GetCurrentBufferId();
+            return GetFilePathFromBufferId(bufferId);
         }
 
         internal static string GetFilePathFromBufferId(IntPtr bufferId)

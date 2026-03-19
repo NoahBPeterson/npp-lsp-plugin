@@ -126,19 +126,9 @@ namespace NppLspPlugin.Plugin
             }
 
             var filePath = PluginBase.GetCurrentFilePath();
-
-            // Fallback: try getting path via buffer ID
             if (string.IsNullOrEmpty(filePath))
             {
-                var bufferId = PluginBase.GetCurrentBufferId();
-                Logger.Log($"GETFULLCURRENTPATH empty, trying buffer ID: {bufferId}");
-                filePath = PluginBase.GetFilePathFromBufferId(bufferId);
-                Logger.Log($"GETFULLPATHFROMBUFFERID returned: '{filePath}'");
-            }
-
-            if (string.IsNullOrEmpty(filePath))
-            {
-                Logger.Log("No current file path (both methods failed)");
+                Logger.Log("No current file path");
                 return;
             }
 
