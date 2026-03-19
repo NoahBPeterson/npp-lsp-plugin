@@ -170,7 +170,7 @@ namespace NppLspPlugin.Plugin
 
             _documentSync = new DocumentSync(_lspClient, languageId);
             _completion = new Completion(_lspClient);
-            _diagnostics = new Diagnostics(_lspClient);
+            _diagnostics = new Diagnostics(_lspClient, serverDef.FileExtensions ?? Array.Empty<string>());
             _hover = new Features.Hover(_lspClient);
             _gotoDefinition = new GotoDefinition(_lspClient);
             _signatureHelp = new Features.SignatureHelp(_lspClient);
