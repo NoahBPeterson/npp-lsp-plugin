@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
+using NppLspPlugin.Util;
 
 namespace NppLspPlugin.Plugin
 {
@@ -70,10 +71,46 @@ namespace NppLspPlugin.Plugin
 
         internal static string GetCurrentFilePath()
         {
-            var sb = new StringBuilder(Npp.MAX_PATH);
-            Npp.SendMessage(nppData._nppHandle,
-                (uint)NppMsg.NPPM_GETFULLCURRENTPATH, Npp.MAX_PATH, sb);
-            return sb.ToString();
+            // Use raw IntPtr buffer to avoid StringBuilder marshaling issues in NativeAOT
+            IntPtr bufferPtr = Marshal.AllocHGlobal(Npp.MAX_PATH * 2); // UTF-16 = 2 bytes per char
+            try
+            {
+                // Zero the buffer
+                for (int i = 0; i < Npp.MAX_PATH * 2; i++)
+                    Marshal.WriteByte(bufferPtr, i, 0);
+
+                Npp.SendMessage(nppData._nppHandle,
+                    (uint)NppMsg.NPPM_GETFULLCURRENTPATH,
+                    (IntPtr)Npp.MAX_PATH, bufferPtr);
+
+                string result = Marshal.PtrToStringUni(bufferPtr) ?? "";
+                Logger.Log($"NPPM_GETFULLCURRENTPATH returned: '{result}' (len={result.Length})");
+                return result;
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(bufferPtr);
+            }
+        }
+
+        internal static string GetFilePathFromBufferId(IntPtr bufferId)
+        {
+            IntPtr bufferPtr = Marshal.AllocHGlobal(Npp.MAX_PATH * 2);
+            try
+            {
+                for (int i = 0; i < Npp.MAX_PATH * 2; i++)
+                    Marshal.WriteByte(bufferPtr, i, 0);
+
+                Npp.SendMessage(nppData._nppHandle,
+                    (uint)NppMsg.NPPM_GETFULLPATHFROMBUFFERID,
+                    bufferId, bufferPtr);
+
+                return Marshal.PtrToStringUni(bufferPtr) ?? "";
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(bufferPtr);
+            }
         }
 
         internal static int GetCurrentLangType()
@@ -91,10 +128,22 @@ namespace NppLspPlugin.Plugin
 
         internal static string GetPluginConfigDir()
         {
-            var sb = new StringBuilder(Npp.MAX_PATH);
-            Npp.SendMessage(nppData._nppHandle,
-                (uint)NppMsg.NPPM_GETPLUGINSCONFIGDIR, Npp.MAX_PATH, sb);
-            return sb.ToString();
+            IntPtr bufferPtr = Marshal.AllocHGlobal(Npp.MAX_PATH * 2);
+            try
+            {
+                for (int i = 0; i < Npp.MAX_PATH * 2; i++)
+                    Marshal.WriteByte(bufferPtr, i, 0);
+
+                Npp.SendMessage(nppData._nppHandle,
+                    (uint)NppMsg.NPPM_GETPLUGINSCONFIGDIR,
+                    (IntPtr)Npp.MAX_PATH, bufferPtr);
+
+                return Marshal.PtrToStringUni(bufferPtr) ?? "";
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(bufferPtr);
+            }
         }
     }
 }

@@ -50,6 +50,10 @@ namespace NppLspPlugin.Plugin
 
             uint code = notification->nmhdr.code;
 
+            // Log Npp notifications (not Scintilla ones which fire constantly)
+            if (code >= 1000 && code < 2000)
+                Logger.Log($"Notification: {code}");
+
             switch (code)
             {
                 case (uint)NppMsg.NPPN_BUFFERACTIVATED:
@@ -122,9 +126,19 @@ namespace NppLspPlugin.Plugin
             }
 
             var filePath = PluginBase.GetCurrentFilePath();
+
+            // Fallback: try getting path via buffer ID
             if (string.IsNullOrEmpty(filePath))
             {
-                Logger.Log("No current file path");
+                var bufferId = PluginBase.GetCurrentBufferId();
+                Logger.Log($"GETFULLCURRENTPATH empty, trying buffer ID: {bufferId}");
+                filePath = PluginBase.GetFilePathFromBufferId(bufferId);
+                Logger.Log($"GETFULLPATHFROMBUFFERID returned: '{filePath}'");
+            }
+
+            if (string.IsNullOrEmpty(filePath))
+            {
+                Logger.Log("No current file path (both methods failed)");
                 return;
             }
 
