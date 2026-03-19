@@ -190,8 +190,12 @@ namespace NppLspPlugin.Plugin
                         Logger.Log($"LSP initialize failed: {t.Exception?.Message}");
                         return;
                     }
-                    _documentSync?.OnBufferActivated();
                     Logger.Log("LSP server initialized successfully");
+                    // Only send didOpen if the active buffer is still a supported file
+                    if (IsCurrentFileSupported())
+                        _documentSync?.OnBufferActivated();
+                    else
+                        Logger.Log("Skipping initial didOpen — active buffer is not a supported file");
                 });
             }
             catch (Exception ex)

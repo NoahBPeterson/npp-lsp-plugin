@@ -93,6 +93,8 @@ namespace NppLspPlugin.Features
                         new TextDocumentContentChangeEvent { Text = text }
                     }
                 });
+
+            Logger.Log($"didChange: {state.Uri} v{state.Version} ({text.Length} chars)");
         }
 
         public string? GetCurrentUri()
