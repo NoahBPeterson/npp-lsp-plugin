@@ -25,9 +25,10 @@ namespace NppLspPlugin.Server
 
         public void Start(string command, string[] args, string workingDirectory)
         {
+            var resolvedCommand = ResolveCommand(command);
+
             var startInfo = new ProcessStartInfo
             {
-                FileName = command,
                 RedirectStandardInput = true,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -36,6 +37,19 @@ namespace NppLspPlugin.Server
                 StandardOutputEncoding = Encoding.UTF8,
                 StandardErrorEncoding = Encoding.UTF8,
             };
+
+            // .cmd/.bat files need to be run through cmd.exe
+            if (resolvedCommand.EndsWith(".cmd", StringComparison.OrdinalIgnoreCase) ||
+                resolvedCommand.EndsWith(".bat", StringComparison.OrdinalIgnoreCase))
+            {
+                startInfo.FileName = "cmd.exe";
+                startInfo.ArgumentList.Add("/c");
+                startInfo.ArgumentList.Add(resolvedCommand);
+            }
+            else
+            {
+                startInfo.FileName = resolvedCommand;
+            }
 
             if (!string.IsNullOrEmpty(workingDirectory))
             {
@@ -197,6 +211,45 @@ namespace NppLspPlugin.Server
 
                 sb.Append((char)b);
             }
+        }
+
+        /// <summary>
+        /// Resolve a command name to a full path. Handles:
+        /// - Absolute paths (returned as-is)
+        /// - Bare names searched on PATH (including .exe/.cmd/.bat extensions)
+        /// </summary>
+        private static string ResolveCommand(string command)
+        {
+            // Already a full/relative path with directory separators — use as-is
+            if (command.Contains(Path.DirectorySeparatorChar) ||
+                command.Contains(Path.AltDirectorySeparatorChar))
+            {
+                return command;
+            }
+
+            // Search PATH for the command, trying common executable extensions
+            var pathVar = Environment.GetEnvironmentVariable("PATH");
+            if (string.IsNullOrEmpty(pathVar)) return command;
+
+            var extensions = new[] { "", ".exe", ".cmd", ".bat" };
+            var dirs = pathVar.Split(Path.PathSeparator);
+
+            foreach (var dir in dirs)
+            {
+                foreach (var ext in extensions)
+                {
+                    var candidate = Path.Combine(dir, command + ext);
+                    if (File.Exists(candidate))
+                    {
+                        Logger.Log($"Resolved '{command}' -> '{candidate}'");
+                        return candidate;
+                    }
+                }
+            }
+
+            // Not found — return as-is and let Process.Start report the error
+            Logger.Log($"Could not resolve '{command}' on PATH, trying as-is");
+            return command;
         }
     }
 }
