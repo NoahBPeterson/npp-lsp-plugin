@@ -15,12 +15,28 @@ namespace NppLspPlugin.Server
         private volatile bool _stopping;
 
         public string LanguageId { get; }
+        public string[] FileExtensions { get; }
         public bool IsRunning => _process != null && !_process.HasExited;
         public event Action<string>? OnMessageReceived;
 
-        public ServerManager(string languageId)
+        public ServerManager(string languageId, string[] fileExtensions)
         {
             LanguageId = languageId;
+            FileExtensions = fileExtensions;
+        }
+
+        public bool SupportsFile(string filePath)
+        {
+            var ext = Path.GetExtension(filePath);
+            if (string.IsNullOrEmpty(ext)) return false;
+            ext = ext.TrimStart('.');
+
+            foreach (var e in FileExtensions)
+            {
+                if (string.Equals(e.TrimStart('.'), ext, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+            return false;
         }
 
         public void Start(string command, string[] args, string workingDirectory)

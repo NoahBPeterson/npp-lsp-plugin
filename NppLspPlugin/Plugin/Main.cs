@@ -61,19 +61,22 @@ namespace NppLspPlugin.Plugin
                     break;
 
                 case (uint)NppMsg.NPPN_FILEOPENED:
-                    _documentSync?.OnFileOpened();
+                    if (IsCurrentFileSupported())
+                        _documentSync?.OnFileOpened();
                     break;
 
                 case (uint)NppMsg.NPPN_FILEBEFORECLOSE:
-                    _documentSync?.OnFileBeforeClose();
+                    if (IsCurrentFileSupported())
+                        _documentSync?.OnFileBeforeClose();
                     break;
 
                 case (uint)NppMsg.NPPN_FILESAVED:
-                    _documentSync?.OnFileSaved();
+                    if (IsCurrentFileSupported())
+                        _documentSync?.OnFileSaved();
                     break;
 
                 case SciNotification.SCN_MODIFIED:
-                    if (_documentSync != null)
+                    if (_documentSync != null && IsCurrentFileSupported())
                     {
                         int modType = notification->modificationType;
                         if ((modType & ScModification.SC_MOD_INSERTTEXT) != 0 ||
@@ -85,13 +88,16 @@ namespace NppLspPlugin.Plugin
                     break;
 
                 case SciNotification.SCN_CHARADDED:
-                    int ch = notification->ch;
-                    _completion?.OnCharAdded(ch);
-                    _signatureHelp?.OnCharAdded(ch);
+                    if (IsCurrentFileSupported())
+                    {
+                        int ch = notification->ch;
+                        _completion?.OnCharAdded(ch);
+                        _signatureHelp?.OnCharAdded(ch);
+                    }
                     break;
 
                 case SciNotification.SCN_DWELLSTART:
-                    if (notification->position != IntPtr.Zero)
+                    if (IsCurrentFileSupported() && notification->position != IntPtr.Zero)
                     {
                         _hover?.OnDwellStart((int)notification->position);
                     }
@@ -103,9 +109,17 @@ namespace NppLspPlugin.Plugin
             }
         }
 
+        private static bool IsCurrentFileSupported()
+        {
+            if (_serverManager == null) return false;
+            var filePath = PluginBase.GetCurrentFilePath();
+            return !string.IsNullOrEmpty(filePath) && _serverManager.SupportsFile(filePath);
+        }
+
         private static void OnBufferActivated()
         {
             TryStartServerForCurrentFile();
+            if (!IsCurrentFileSupported()) return;
             _documentSync?.OnBufferActivated();
             _diagnostics?.ReapplyForCurrentFile();
         }
@@ -151,7 +165,7 @@ namespace NppLspPlugin.Plugin
 
             var rootUri = WorkspaceDetector.DetectRoot(filePath);
 
-            _serverManager = new ServerManager(languageId);
+            _serverManager = new ServerManager(languageId, serverDef.FileExtensions ?? Array.Empty<string>());
             _lspClient = new LspClient(_serverManager);
 
             _documentSync = new DocumentSync(_lspClient, languageId);
