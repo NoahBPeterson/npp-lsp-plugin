@@ -63,9 +63,9 @@ namespace NppLspPlugin.Features
                         // Strip markdown formatting for plain text calltip
                         text = StripMarkdown(text);
 
-                        // Truncate very long hovers
-                        if (text.Length > 2000)
-                            text = text.Substring(0, 2000) + "...";
+                        // Truncate — calltips can't scroll
+                        if (text.Length > 250)
+                            text = text.Substring(0, 250) + "...";
 
                         Sci.SendMessage(sci, (uint)SciMsg.SCI_CALLTIPSHOW, bytePosition, text);
                     }
