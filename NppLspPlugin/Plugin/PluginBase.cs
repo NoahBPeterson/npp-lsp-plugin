@@ -72,7 +72,7 @@ namespace NppLspPlugin.Plugin
         {
             var sb = new StringBuilder(Npp.MAX_PATH);
             Npp.SendMessage(nppData._nppHandle,
-                (uint)NppMsg.NPPM_GETFULLCURRENTPATH, 0, sb);
+                (uint)NppMsg.NPPM_GETFULLCURRENTPATH, Npp.MAX_PATH, sb);
             return sb.ToString();
         }
 
