@@ -9,11 +9,13 @@ namespace NppLspPlugin.Features
     internal class DocumentSync
     {
         private readonly LspClient _client;
+        private readonly string _languageId;
         private readonly ConcurrentDictionary<IntPtr, DocumentState> _documents = new();
 
-        public DocumentSync(LspClient client)
+        public DocumentSync(LspClient client, string languageId)
         {
             _client = client;
+            _languageId = languageId;
         }
 
         public void OnBufferActivated()
@@ -102,8 +104,7 @@ namespace NppLspPlugin.Features
         private void SendDidOpen(IntPtr bufferId, string filePath)
         {
             var uri = UriConverter.PathToUri(filePath);
-            var langType = PluginBase.GetCurrentLangType();
-            var languageId = Server.LanguageMapping.GetLanguageId(langType) ?? "text";
+            var languageId = _languageId;
             var sci = PluginBase.GetCurrentScintilla();
             var text = PositionConverter.GetDocumentText(sci);
 

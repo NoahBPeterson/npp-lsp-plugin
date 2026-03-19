@@ -112,12 +112,13 @@ namespace NppLspPlugin.Plugin
             var config = ServerConfig.Load(configDir);
             if (config == null) return;
 
-            var langType = PluginBase.GetCurrentLangType();
-            var languageId = LanguageMapping.GetLanguageId(langType);
-            if (languageId == null) return;
+            var filePath = PluginBase.GetCurrentFilePath();
+            if (string.IsNullOrEmpty(filePath)) return;
 
-            var serverDef = config.FindServer(languageId);
+            var serverDef = config.FindServerForFile(filePath);
             if (serverDef == null) return;
+
+            var languageId = serverDef.LanguageId;
 
             // If we already have a running server for this language, skip
             if (_serverManager != null && _serverManager.IsRunning && _serverManager.LanguageId == languageId)
@@ -126,13 +127,12 @@ namespace NppLspPlugin.Plugin
             // Stop any existing server
             _serverManager?.Stop();
 
-            var filePath = PluginBase.GetCurrentFilePath();
             var rootUri = WorkspaceDetector.DetectRoot(filePath);
 
             _serverManager = new ServerManager(languageId);
             _lspClient = new LspClient(_serverManager);
 
-            _documentSync = new DocumentSync(_lspClient);
+            _documentSync = new DocumentSync(_lspClient, languageId);
             _completion = new Completion(_lspClient);
             _diagnostics = new Diagnostics(_lspClient);
             _hover = new Features.Hover(_lspClient);

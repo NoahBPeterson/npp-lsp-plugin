@@ -12,21 +12,38 @@ namespace NppLspPlugin.Server
         [JsonPropertyName("servers")]
         public ServerDefinition[] Servers { get; set; } = Array.Empty<ServerDefinition>();
 
-        public ServerDefinition? FindServer(string languageId)
+        /// <summary>
+        /// Find a server definition matching a file path (by extension) or Npp language name.
+        /// </summary>
+        public ServerDefinition? FindServerForFile(string filePath)
         {
+            var ext = Path.GetExtension(filePath);
+            if (string.IsNullOrEmpty(ext)) return null;
+
+            // Normalize: ".py" -> "py"
+            ext = ext.TrimStart('.');
+
             foreach (var s in Servers)
             {
-                if (string.Equals(s.Language, languageId, StringComparison.OrdinalIgnoreCase))
-                    return s;
+                if (s.FileExtensions == null) continue;
+                foreach (var e in s.FileExtensions)
+                {
+                    if (string.Equals(e.TrimStart('.'), ext, StringComparison.OrdinalIgnoreCase))
+                        return s;
+                }
             }
+
             return null;
         }
     }
 
     public class ServerDefinition
     {
-        [JsonPropertyName("language")]
-        public string Language { get; set; } = "";
+        [JsonPropertyName("languageId")]
+        public string LanguageId { get; set; } = "";
+
+        [JsonPropertyName("fileExtensions")]
+        public string[]? FileExtensions { get; set; }
 
         [JsonPropertyName("command")]
         public string Command { get; set; } = "";
@@ -73,21 +90,52 @@ namespace NppLspPlugin.Server
                 {
                     new ServerDefinition
                     {
-                        Language = "python",
+                        LanguageId = "python",
+                        FileExtensions = new[] { "py", "pyi" },
                         Command = "pylsp",
                         Args = Array.Empty<string>()
                     },
                     new ServerDefinition
                     {
-                        Language = "c",
+                        LanguageId = "c",
+                        FileExtensions = new[] { "c", "h" },
                         Command = "clangd",
                         Args = new[] { "--background-index" }
                     },
                     new ServerDefinition
                     {
-                        Language = "cpp",
+                        LanguageId = "cpp",
+                        FileExtensions = new[] { "cpp", "cxx", "cc", "hpp", "hxx", "hh" },
                         Command = "clangd",
                         Args = new[] { "--background-index" }
+                    },
+                    new ServerDefinition
+                    {
+                        LanguageId = "javascript",
+                        FileExtensions = new[] { "js", "mjs", "cjs", "jsx" },
+                        Command = "typescript-language-server",
+                        Args = new[] { "--stdio" }
+                    },
+                    new ServerDefinition
+                    {
+                        LanguageId = "typescript",
+                        FileExtensions = new[] { "ts", "tsx", "mts", "cts" },
+                        Command = "typescript-language-server",
+                        Args = new[] { "--stdio" }
+                    },
+                    new ServerDefinition
+                    {
+                        LanguageId = "rust",
+                        FileExtensions = new[] { "rs" },
+                        Command = "rust-analyzer",
+                        Args = Array.Empty<string>()
+                    },
+                    new ServerDefinition
+                    {
+                        LanguageId = "go",
+                        FileExtensions = new[] { "go" },
+                        Command = "gopls",
+                        Args = new[] { "serve" }
                     }
                 }
             };
