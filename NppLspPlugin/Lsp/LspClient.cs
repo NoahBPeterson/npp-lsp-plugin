@@ -15,8 +15,10 @@ namespace NppLspPlugin.Lsp
         private int _nextId;
         private readonly ConcurrentDictionary<int, TaskCompletionSource<JsonElement?>> _pendingRequests = new();
         private ServerCapabilities? _serverCapabilities;
+        private volatile bool _initialized;
 
         public ServerCapabilities? ServerCapabilities => _serverCapabilities;
+        public bool IsInitialized => _initialized;
         public event Action<PublishDiagnosticsParams>? OnDiagnosticsReceived;
 
         public LspClient(ServerManager server)
@@ -57,6 +59,7 @@ namespace NppLspPlugin.Lsp
 
             // Send initialized notification
             SendNotification("initialized", null);
+            _initialized = true;
             Logger.Log("LSP handshake complete");
         }
 

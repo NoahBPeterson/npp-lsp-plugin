@@ -50,10 +50,6 @@ namespace NppLspPlugin.Plugin
 
             uint code = notification->nmhdr.code;
 
-            // Log Npp notifications (not Scintilla ones which fire constantly)
-            if (code >= 1000 && code < 2000)
-                Logger.Log($"Notification: {code}");
-
             switch (code)
             {
                 case (uint)NppMsg.NPPN_BUFFERACTIVATED:
@@ -112,6 +108,7 @@ namespace NppLspPlugin.Plugin
         private static bool IsCurrentFileSupported()
         {
             if (_serverManager == null) return false;
+            if (_lspClient == null || !_lspClient.IsInitialized) return false;
             var filePath = PluginBase.GetCurrentFilePath();
             return !string.IsNullOrEmpty(filePath) && _serverManager.SupportsFile(filePath);
         }

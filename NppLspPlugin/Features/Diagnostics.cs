@@ -142,7 +142,11 @@ namespace NppLspPlugin.Features
             if (diagnostics.Diagnostics.Length > 0)
                 Sci.SendMessage(sci, (uint)SciMsg.SCI_ANNOTATIONSETVISIBLE, 2, 0);
 
-            Logger.Log($"Applied {diagnostics.Diagnostics.Length} diagnostics for {diagnostics.Uri}");
+            var summary = diagnostics.Diagnostics.Length > 0
+                ? string.Join("; ", Array.ConvertAll(diagnostics.Diagnostics,
+                    d => $"L{d.Range.Start.Line + 1}: {d.Message}"))
+                : "(none)";
+            Logger.Log($"Applied {diagnostics.Diagnostics.Length} diagnostics for {diagnostics.Uri}: {summary}");
         }
 
         private static void SetupIndicator(IntPtr sci, int indicator, int style, int color)
