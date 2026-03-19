@@ -80,15 +80,18 @@ namespace NppLspPlugin.Plugin
         NPPM_ADDSCNMODIFIEDFLAGS = NPPMSG + 80,
         NPPM_GETNBOPENFILES = NPPMSG + 7,
 
-        // Notification codes
+        // Notification codes (from Notepad_plus_msgs.h)
         NPPN_FIRST = 1000,
-        NPPN_READY = NPPN_FIRST + 1,
-        NPPN_TBMODIFICATION = NPPN_FIRST + 2,
-        NPPN_SHUTDOWN = NPPN_FIRST + 4,
-        NPPN_FILEOPENED = NPPN_FIRST + 5,
-        NPPN_BUFFERACTIVATED = NPPN_FIRST + 9,
-        NPPN_FILESAVED = NPPN_FIRST + 14,
-        NPPN_FILEBEFORECLOSE = NPPN_FIRST + 17,
+        NPPN_READY = NPPN_FIRST + 1,            // 1001
+        NPPN_TBMODIFICATION = NPPN_FIRST + 2,   // 1002
+        NPPN_FILEBEFORECLOSE = NPPN_FIRST + 3,   // 1003
+        NPPN_FILEOPENED = NPPN_FIRST + 4,        // 1004
+        NPPN_FILECLOSED = NPPN_FIRST + 5,        // 1005
+        NPPN_FILEBEFOREOPEN = NPPN_FIRST + 6,    // 1006
+        NPPN_FILEBEFORESAVE = NPPN_FIRST + 7,    // 1007
+        NPPN_FILESAVED = NPPN_FIRST + 8,         // 1008
+        NPPN_SHUTDOWN = NPPN_FIRST + 9,          // 1009
+        NPPN_BUFFERACTIVATED = NPPN_FIRST + 10,  // 1010
     }
 
     public enum SciMsg : uint
